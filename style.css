@@ -102,3 +102,8 @@ body {
     transition: outline .08s ease;
 }
 .pixel:hover { outline: 2px dashed #999; }
+
+#pipette.is-active {
+    outline: 2px solid #111;
+    box-shadow: 0 0 0 2px rgba(0,0,0,.15) inset;
+}

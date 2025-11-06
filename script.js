@@ -11,6 +11,8 @@ const undoBtn    = document.getElementById('undo');
 const redoBtn    = document.getElementById('redo');
 const saveBtn    = document.getElementById('save');
 const loadBtn    = document.getElementById('load');
+const exportBtn  = document.getElementById('export');
+const pipetteBtn = document.getElementById('pipette');
 
 // Константи
 const SIZE = 8; // 8x8
@@ -18,8 +20,9 @@ const STORAGE_KEY = 'pixel-mood:canvas';
 
 // Стан
 let gridState = Array.from({ length: SIZE * SIZE }, () => ''); // '' або #hex
-const history = [];   // стек знімків стану (масивів)
+const history = [];   // стек знімків стану
 const redoStack = []; // стек для redo
+let isPipette = false;
 
 // Утилітли стану
 const snapshot = () => [...gridState];
@@ -29,9 +32,8 @@ function renderFromState() {
     });
     updateCounter();
 }
-function pushHistory(reason = '') {
+function pushHistory() {
     history.push(snapshot());
-    // після будь-якої нової дії redo обнуляємо
     redoStack.length = 0;
     updateUndoRedoUI();
 }
@@ -46,27 +48,38 @@ function makeGrid() {
         const cell = document.createElement('button');
         cell.className = 'pixel';
         cell.dataset.index = i;
-        cell.addEventListener('click', () => paint(i, colorInput.value));
+        cell.addEventListener('click', () => onCellClick(i));
         canvasGrid.appendChild(cell);
     }
-    // базовий знімок (порожнє полотно)
-    pushHistory('init');
+    pushHistory(); // базовий знімок
     updateCounter();
     updateUndoRedoUI();
 }
 
-// Малювання
+// Клік по клітинці (малювання)
+function onCellClick(index) {
+    if (isPipette) {
+        // взяти колір із клітинки
+        const picked = gridState[index] || '#ffffff';
+        colorInput.value = picked;
+        isPipette = false;
+        pipetteBtn.classList.remove('is-active');
+        return;
+    }
+    paint(index, colorInput.value);
+}
+
 function paint(index, color) {
     gridState[index] = color;
     canvasGrid.children[index].style.background = color;
-    pushHistory('paint');
+    pushHistory();
     updateCounter();
 }
 
 function clearGrid() {
     gridState.fill('');
     renderFromState();
-    pushHistory('clear');
+    pushHistory();
 }
 
 // Випадковий колір у палітру
@@ -88,8 +101,8 @@ function updateCounter() {
 
 // UNDO / REDO
 function undo() {
-    if (history.length <= 1) return;         // нічого відкочувати
-    const last = history.pop();              // поточний у redo
+    if (history.length <= 1) return;
+    const last = history.pop();
     redoStack.push(last);
     const prev = history[history.length - 1];
     gridState = [...prev];
@@ -121,13 +134,38 @@ function loadFromStorage() {
         if (Array.isArray(parsed) && parsed.length === SIZE * SIZE) {
             gridState = [...parsed];
             renderFromState();
-            // «заморозимо» історію від завантаженого стану
             history.length = 0;
-            pushHistory('loaded');
+            pushHistory();
         }
-    } catch {
-        // ігноруємо помилкові дані
+    } catch { /* ігноруємо */ }
+}
+
+// Експорт PNG
+function exportPNG() {
+    const scale = 32; // розмір «пікселя» в зображенні
+    const cnv = document.createElement('canvas');
+    cnv.width  = SIZE * scale;
+    cnv.height = SIZE * scale;
+    const g = cnv.getContext('2d');
+
+    for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+            const col = gridState[y * SIZE + x] || '#ffffff';
+            g.fillStyle = col;
+            g.fillRect(x * scale, y * scale, scale, scale);
+        }
     }
+    const url = cnv.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pixel-mood.png';
+    a.click();
+}
+
+// Піпетка
+function togglePipette() {
+    isPipette = !isPipette;
+    pipetteBtn.classList.toggle('is-active', isPipette);
 }
 
 // Події
@@ -139,6 +177,8 @@ undoBtn.addEventListener('click', undo);
 redoBtn.addEventListener('click', redo);
 saveBtn.addEventListener('click', saveToStorage);
 loadBtn.addEventListener('click', loadFromStorage);
+exportBtn.addEventListener('click', exportPNG);
+pipetteBtn.addEventListener('click', togglePipette);
 
 // Старт
 makeGrid();
