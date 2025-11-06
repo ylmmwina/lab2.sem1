@@ -1,0 +1,7 @@
+# Системні файли
+.DS_Store
+Thumbs.db
+
+# Службові файли WebStorm
+.idea/
+*.iml
