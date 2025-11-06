@@ -16,14 +16,36 @@
 
 <!-- Головна зона малювання -->
 <main class="workspace">
-    <!-- Панель інструментів (буде пізніше) -->
-    <section class="toolbar">
-        <p><em>Тут буде панель з кнопками</em></p>
+    <!-- Панель інструментів -->
+    <section class="toolbar" aria-label="Панель інструментів">
+        <label>Пензлик:
+            <input id="color" type="color" value="#ff6ea9" />
+        </label>
+
+        <label>Фон сторінки:
+            <input id="bg" type="color" value="#FF69B4" />
+        </label>
+
+        <button id="apply-bg">Застосувати фон</button>
+        <span class="sep"></span>
+
+        <button id="undo">Undo</button>
+        <button id="redo">Redo</button>
+        <button id="clear">Очистити</button>
+        <button id="random">Random color</button>
+        <span class="sep"></span>
+
+        <button id="save">Зберегти</button>
+        <button id="load">Відновити</button>
+        <button id="export">Експорт PNG</button>
     </section>
 
-    <!-- Полотно для малювання -->
+    <!-- Полотно для пікселів -->
     <section class="canvas-area">
-        <p><em>Тут з’явиться сітка для пікселів</em></p>
+        <h2 class="panel-title">Полотно 8×8</h2>
+        <div id="canvas-grid" class="grid placeholder" aria-label="Піксельне полотно">
+            <p class="muted">Тут з’явиться сітка з 8×8 клітинок (на наступному кроці)</p>
+        </div>
     </section>
 </main>
 
