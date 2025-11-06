@@ -75,3 +75,30 @@ body {
     text-align: center;
     font-size: 14px;
 }
+
+/* Параметри сітки */
+:root { --cell: 36px; --gap: 6px; }
+
+/* Контейнер пікселів */
+.grid.pixels {
+    display: grid;
+    grid-template-columns: repeat(8, var(--cell));
+    gap: var(--gap);
+    justify-content: center;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 12px;
+}
+
+/* Кнопка-піксель */
+.pixel {
+    width: var(--cell);
+    height: var(--cell);
+    background: #ffffff;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: outline .08s ease;
+}
+.pixel:hover { outline: 2px dashed #999; }
