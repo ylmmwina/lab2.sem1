@@ -199,3 +199,34 @@ body {
     font-family: monospace;
     margin-right: 6px;
 }
+
+/* Історія дій (контейнер) */
+.history-panel {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 20px;
+}
+
+.history-panel h3 {
+    margin: 0 0 10px;
+    font-size: 17px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.history-table th,
+.history-table td {
+    border: 1px solid rgba(0,0,0,.12);
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.history-table tbody tr:nth-child(odd) {
+    background: #fafafa;
+}

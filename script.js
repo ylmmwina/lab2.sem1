@@ -14,6 +14,22 @@ const loadBtn    = document.getElementById('load');
 const exportBtn  = document.getElementById('export');
 const pipetteBtn = document.getElementById('pipette');
 
+// Таблиця історії
+const historyBody = document.getElementById('history-body');
+let actionIndex = 1;
+// Додати запис в історію (нове вгору)
+function logAction(action, details = '') {
+    if (!historyBody) return; // на випадок, якщо блоку ще нема в HTML
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.textContent = actionIndex++;
+    const td2 = document.createElement('td'); td2.textContent = action;
+    const td3 = document.createElement('td'); td3.textContent = details;
+    tr.append(td1, td2, td3);
+    historyBody.prepend(tr);
+    const MAX_ROWS = 200;
+    while (historyBody.children.length > MAX_ROWS) historyBody.lastChild.remove();
+}
+
 // Константи
 const SIZE = 8; // 8x8
 const STORAGE_KEY = 'pixel-mood:canvas';
@@ -54,6 +70,7 @@ function makeGrid() {
     pushHistory(); // базовий знімок
     updateCounter();
     updateUndoRedoUI();
+    logAction('grid:init', '8×8 created');
 }
 
 // Клік по клітинці (малювання)
@@ -64,6 +81,7 @@ function onCellClick(index) {
         colorInput.value = picked;
         isPipette = false;
         pipetteBtn.classList.remove('is-active');
+        logAction('pipette', 'picked ' + picked);
         return;
     }
     paint(index, colorInput.value);
@@ -74,23 +92,27 @@ function paint(index, color) {
     canvasGrid.children[index].style.background = color;
     pushHistory();
     updateCounter();
+    logAction('paint', `i=${index}, color=${color}`);
 }
 
 function clearGrid() {
     gridState.fill('');
     renderFromState();
     pushHistory();
+    logAction('clear', 'canvas reset');
 }
 
 // Випадковий колір у палітру
 function randomColor() {
     const v = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
     colorInput.value = `#${v}`;
+    logAction('palette:random', colorInput.value);
 }
 
 // Фон сторінки
 function applyBackground() {
     document.body.style.background = bgInput.value;
+    logAction('background:apply', bgInput.value);
 }
 
 // Лічильник
@@ -108,6 +130,7 @@ function undo() {
     gridState = [...prev];
     renderFromState();
     updateUndoRedoUI();
+    logAction('undo');
 }
 function redo() {
     if (!redoStack.length) return;
@@ -116,6 +139,7 @@ function redo() {
     gridState = [...next];
     renderFromState();
     updateUndoRedoUI();
+    logAction('redo');
 }
 function updateUndoRedoUI() {
     undoBtn.disabled = history.length <= 1;
@@ -125,6 +149,7 @@ function updateUndoRedoUI() {
 // SAVE / LOAD (localStorage)
 function saveToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gridState));
+    logAction('save', 'localStorage');
 }
 function loadFromStorage() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -136,6 +161,7 @@ function loadFromStorage() {
             renderFromState();
             history.length = 0;
             pushHistory();
+            logAction('load', 'localStorage');
         }
     } catch { /* ігноруємо */ }
 }
@@ -160,12 +186,14 @@ function exportPNG() {
     a.href = url;
     a.download = 'pixel-mood.png';
     a.click();
+    logAction('export', 'png');
 }
 
 // Піпетка
 function togglePipette() {
     isPipette = !isPipette;
     pipetteBtn.classList.toggle('is-active', isPipette);
+    logAction('pipette', isPipette ? 'on' : 'off');
 }
 
 // Події
