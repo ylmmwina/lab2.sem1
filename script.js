@@ -24,7 +24,7 @@ const history = [];   // стек знімків стану
 const redoStack = []; // стек для redo
 let isPipette = false;
 
-// Утилітли стану
+// Утиліти стану
 const snapshot = () => [...gridState];
 function renderFromState() {
     [...canvasGrid.children].forEach((btn, i) => {
@@ -179,6 +179,28 @@ saveBtn.addEventListener('click', saveToStorage);
 loadBtn.addEventListener('click', loadFromStorage);
 exportBtn.addEventListener('click', exportPNG);
 pipetteBtn.addEventListener('click', togglePipette);
+
+// ==== ГАРЯЧІ КЛАВІШІ (layout-agnostic через e.code) ====
+// KeyZ — Undo, KeyY — Redo, KeyC — Clear, KeyR — Random color,
+// KeyS — Save, KeyL — Load, KeyE — Export PNG, KeyP — Pipette toggle,
+// KeyB — Apply background
+document.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea') return; // не заважаємо вводам
+
+    switch (e.code) {
+        case 'KeyZ': e.preventDefault(); undo(); break;
+        case 'KeyY': e.preventDefault(); redo(); break;
+        case 'KeyC': e.preventDefault(); clearGrid(); break;
+        case 'KeyR': e.preventDefault(); randomColor(); break;
+        case 'KeyS': e.preventDefault(); saveToStorage(); break;
+        case 'KeyL': e.preventDefault(); loadFromStorage(); break;
+        case 'KeyE': e.preventDefault(); exportPNG(); break;
+        case 'KeyP': e.preventDefault(); togglePipette(); break;
+        case 'KeyB': e.preventDefault(); applyBackground(); break;
+        default: break;
+    }
+});
 
 // Старт
 makeGrid();
