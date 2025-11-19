@@ -1,0 +1,39 @@
+/* tabs.css — мінімальні стилі для вкладок і вікон */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0 16px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,.4);
+    background: rgba(255,255,255,.15);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+}
+
+.tab-btn.is-active {
+    outline: 2px solid #fff;
+    background: rgba(255,255,255,.25);
+}
+
+.view {
+    display: none;
+}
+
+.view.is-active {
+    display: block;
+}
+
+/* опційно: контент всередині нових вкладок */
+.view .card {
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
