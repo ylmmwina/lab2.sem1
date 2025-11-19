@@ -79,26 +79,35 @@
 <section id="view-gallery" class="view">
     <div class="card">
         <h3>Галерея пресетів</h3>
-        <p>Тут з’являться кнопки: «Зберегти як пресет», «Завантажити пресет», «Видалити пресет», а також список наявних пресетів.</p>
-        <div class="controls">
-            <button id="preset-save">Зберегти як пресет</button>
-            <button id="preset-load">Завантажити пресет</button>
-            <button id="preset-remove">Видалити пресет</button>
+        <p>Зберігай, завантажуй та видаляй свої малюнки.</p>
+
+        <div class="gallery-controls">
+            <button id="preset-save" class="btn">💾 Зберегти</button>
+            <button id="preset-load" class="btn">📥 Завантажити</button>
+            <button id="preset-remove" class="btn danger">🗑️ Видалити</button>
         </div>
-        <div id="preset-list" style="margin-top:8px;"></div>
+
+        <div id="preset-list" class="preset-list"></div>
     </div>
 </section>
 
 <section id="view-settings" class="view">
     <div class="card">
-        <h3>Налаштування</h3>
-        <label style="display:block; margin-bottom:6px;">
-            <input type="checkbox" id="toggle-borders"> Показувати межі клітинок
+        <h3>⚙️ Налаштування</h3>
+
+        <label class="setting-item">
+            <input type="checkbox" id="toggle-borders">
+            Показувати межі клітинок
         </label>
-        <label style="display:block; margin-bottom:6px;">
-            <input type="checkbox" id="toggle-sound"> Звук кліку (демо)
+
+        <label class="setting-item">
+            <input type="checkbox" id="toggle-sound">
+            Звук кліку (демо)
         </label>
-        <button id="app-reset">Скинути застосунок</button>
+
+        <button id="app-reset" class="btn danger" style="margin-top:12px;">
+            🔄 Скинути застосунок
+        </button>
     </div>
 </section>
 
