@@ -41,6 +41,8 @@ import {
     notifyPaintClick,
 } from './settings.js';
 
+import { initGallery } from './gallery.js';
+
 // ========= ЕЛЕМЕНТИ =========
 const canvasGrid = document.getElementById('canvas-grid');
 const colorInput = document.getElementById('color');
@@ -207,6 +209,7 @@ document.addEventListener('keydown', (e) => {
 // ========= СТАРТ =========
 makeGrid();
 initSettings(canvasGrid, counterEl, logAction, updateUndoRedoUI);
+initGallery(canvasGrid, counterEl, logAction, updateUndoRedoUI);
 
 // ===== ЕКСПОРТ У window ДЛЯ ТЕСТІВ/КОНСОЛІ =====
 window.gridState       = gridState;
