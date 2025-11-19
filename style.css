@@ -18,8 +18,7 @@ body {
 .pixel-title {
     display: block;
     margin: 8px auto 0;
-    image-rendering: pixelated;      /* чіткі пікселі */
-    image-rendering: crisp-edges;
+    image-rendering: pixelated;
     max-width: min(95vw, 720px);
 }
 
@@ -229,4 +228,62 @@ body {
 
 .history-table tbody tr:nth-child(odd) {
     background: #fafafa;
+}
+
+/* універсальні кнопки */
+.btn {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 12px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+    transition: 0.2s;
+}
+
+.btn:hover {
+    background: rgba(255,255,255,0.32);
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+    background: rgba(255,255,255,0.18);
+}
+
+.btn.danger {
+    border-color: rgba(255,0,60,0.5);
+    background: rgba(255,0,80,0.25);
+}
+
+.btn.danger:hover {
+    background: rgba(255,0,80,0.35);
+}
+
+/* галерея кнопок */
+.gallery-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+/* список пресетів */
+#preset-select {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+
+/* налаштування */
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
 }
