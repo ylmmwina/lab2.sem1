@@ -1,7 +1,25 @@
+// app.js — головний модуль застосунку
+
+import {
+    SIZE,
+    gridState,
+    renderFromState,
+    updateCounter,
+} from './state.js';
+
+import {
+    initHistory,
+    pushHistory as historyPush,
+    undo as historyUndo,
+    redo as historyRedo,
+    canUndo,
+    canRedo,
+} from './history.js';
+
 // ========= ЕЛЕМЕНТИ =========
 const canvasGrid = document.getElementById('canvas-grid');
 const colorInput = document.getElementById('color');
-const bgInput    = document.getElementElementById('bg');
+const bgInput    = document.getElementById('bg');
 const applyBgBtn = document.getElementById('apply-bg');
 const clearBtn   = document.getElementById('clear');
 const randomBtn  = document.getElementById('random');
@@ -31,27 +49,22 @@ function logAction(action, details = '') {
 }
 
 // Константи
-const SIZE = 8; // 8x8
 const STORAGE_KEY = 'pixel-mood:canvas';
 
-// Стан
-let gridState = Array.from({ length: SIZE * SIZE }, () => ''); // '' або #hex
-const history = [];   // стек знімків стану
-const redoStack = []; // стек для redo
+// Локальний стан
 let isPipette = false;
 
-// Утиліти стану
-const snapshot = () => [...gridState];
-function renderFromState() {
-    [...canvasGrid.children].forEach((btn, i) => {
-        btn.style.background = gridState[i] || '#ffffff';
-    });
-    updateCounter();
-}
-function pushHistory() {
-    history.push(snapshot());
-    redoStack.length = 0;
+// Обгортка над pushHistory з оновленням UI
+function commitSnapshot() {
+    historyPush();
     updateUndoRedoUI();
+}
+
+// Оновлення стану кнопок undo/redo
+function updateUndoRedoUI() {
+    if (!undoBtn || !redoBtn) return;
+    undoBtn.disabled = !canUndo();
+    redoBtn.disabled = !canRedo();
 }
 
 // Генерація сітки
@@ -67,9 +80,11 @@ function makeGrid() {
         cell.addEventListener('click', () => onCellClick(i));
         canvasGrid.appendChild(cell);
     }
-    pushHistory(); // базовий знімок
-    updateCounter();
-    updateUndoRedoUI();
+
+    // Ініціалізація історії та базового знімка
+    initHistory();
+    commitSnapshot();
+    updateCounter(counterEl);
     logAction('grid:init', '8×8 created');
 }
 
@@ -90,15 +105,15 @@ function onCellClick(index) {
 function paint(index, color) {
     gridState[index] = color;
     canvasGrid.children[index].style.background = color;
-    pushHistory();
-    updateCounter();
+    commitSnapshot();
+    updateCounter(counterEl);
     logAction('paint', `i=${index}, color=${color}`);
 }
 
 function clearGrid() {
     gridState.fill('');
-    renderFromState();
-    pushHistory();
+    renderFromState(canvasGrid, counterEl);
+    commitSnapshot();
     logAction('clear', 'canvas reset');
 }
 
@@ -115,35 +130,17 @@ function applyBackground() {
     logAction('background:apply', bgInput.value);
 }
 
-// Лічильник
-function updateCounter() {
-    const filled = gridState.filter(x => x && x !== '').length;
-    counterEl.textContent = `Заповнено: ${filled}`;
-}
-
-// UNDO / REDO
-function undo() {
-    if (history.length <= 1) return;
-    const last = history.pop();
-    redoStack.push(last);
-    const prev = history[history.length - 1];
-    gridState = [...prev];
-    renderFromState();
+// Обгортки над undo/redo історії
+function handleUndo() {
+    historyUndo(canvasGrid, counterEl, renderFromState);
     updateUndoRedoUI();
     logAction('undo');
 }
-function redo() {
-    if (!redoStack.length) return;
-    const next = redoStack.pop();
-    history.push(next);
-    gridState = [...next];
-    renderFromState();
+
+function handleRedo() {
+    historyRedo(canvasGrid, counterEl, renderFromState);
     updateUndoRedoUI();
     logAction('redo');
-}
-function updateUndoRedoUI() {
-    undoBtn.disabled = history.length <= 1;
-    redoBtn.disabled = redoStack.length === 0;
 }
 
 // SAVE / LOAD (localStorage)
@@ -151,19 +148,25 @@ function saveToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gridState));
     logAction('save', 'localStorage');
 }
+
 function loadFromStorage() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length === SIZE * SIZE) {
-            gridState = [...parsed];
-            renderFromState();
-            history.length = 0;
-            pushHistory();
+        if (Array.isArray(parsed) && parsed.length === gridState.length) {
+            // оновлюємо стан і рендеримо
+            for (let i = 0; i < gridState.length; i++) {
+                gridState[i] = parsed[i];
+            }
+            renderFromState(canvasGrid, counterEl);
+            initHistory();
+            commitSnapshot();
             logAction('load', 'localStorage');
         }
-    } catch { /* ігноруємо */ }
+    } catch {
+        // ігноруємо
+    }
 }
 
 // Експорт PNG
@@ -201,24 +204,21 @@ applyBgBtn.addEventListener('click', applyBackground);
 clearBtn.addEventListener('click', clearGrid);
 randomBtn.addEventListener('click', randomColor);
 
-undoBtn.addEventListener('click', undo);
-redoBtn.addEventListener('click', redo);
+undoBtn.addEventListener('click', handleUndo);
+redoBtn.addEventListener('click', handleRedo);
 saveBtn.addEventListener('click', saveToStorage);
 loadBtn.addEventListener('click', loadFromStorage);
 exportBtn.addEventListener('click', exportPNG);
 pipetteBtn.addEventListener('click', togglePipette);
 
 // ==== ГАРЯЧІ КЛАВІШІ (layout-agnostic через e.code) ====
-// KeyZ — Undo, KeyY — Redo, KeyC — Clear, KeyR — Random color,
-// KeyS — Save, KeyL — Load, KeyE — Export PNG, KeyP — Pipette toggle,
-// KeyB — Apply background
 document.addEventListener('keydown', (e) => {
     const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
     if (tag === 'input' || tag === 'textarea') return; // не заважаємо вводам
 
     switch (e.code) {
-        case 'KeyZ': e.preventDefault(); undo(); break;
-        case 'KeyY': e.preventDefault(); redo(); break;
+        case 'KeyZ': e.preventDefault(); handleUndo(); break;
+        case 'KeyY': e.preventDefault(); handleRedo(); break;
         case 'KeyC': e.preventDefault(); clearGrid(); break;
         case 'KeyR': e.preventDefault(); randomColor(); break;
         case 'KeyS': e.preventDefault(); saveToStorage(); break;
@@ -234,15 +234,15 @@ document.addEventListener('keydown', (e) => {
 makeGrid();
 
 // ===== ЕКСПОРТ У window ДЛЯ ТЕСТІВ/КОНСОЛІ =====
-window.gridState = gridState;
-window.paint = paint;
-window.clearGrid = clearGrid;
-window.randomColor = randomColor;
-window.applyBackground = applyBackground;
-window.undo = undo;
-window.redo = redo;
-window.saveToStorage = saveToStorage;
-window.loadFromStorage = loadFromStorage;
-window.exportPNG = exportPNG;
-window.togglePipette = togglePipette;
-window.onCellClick = onCellClick;
+window.gridState      = gridState;
+window.paint          = paint;
+window.clearGrid      = clearGrid;
+window.randomColor    = randomColor;
+window.applyBackground= applyBackground;
+window.undo           = handleUndo;
+window.redo           = handleRedo;
+window.saveToStorage  = saveToStorage;
+window.loadFromStorage= loadFromStorage;
+window.exportPNG      = exportPNG;
+window.togglePipette  = togglePipette;
+window.onCellClick    = onCellClick;
