@@ -4,24 +4,29 @@ import { test, assert, assertEqual } from "./core.js";
 import { gridState } from "../js/state.js";
 import { createGrid, paint, clearGrid } from "../js/grid.js";
 
-test("grid: createGrid builds 8x8 = 64 cells", () => {
+function makeTestGrid() {
     const canvas = document.getElementById("canvas-grid");
     assert(canvas, "#canvas-grid not found");
 
     canvas.innerHTML = "";
-    createGrid(canvas, () => {});
 
+    const handler = window.onCellClick || (() => {});
+    createGrid(canvas, handler);
+
+    return canvas;
+}
+
+test("grid: createGrid builds 8x8 = 64 cells", () => {
+    const canvas = makeTestGrid();
     assertEqual(canvas.children.length, 64, "canvas must have 64 pixel buttons");
 });
 
 test("grid: paint() changes state and increments filled counter", () => {
-    const canvas = document.getElementById("canvas-grid");
+    const canvas = makeTestGrid();
     const counterEl = document.getElementById("counter");
-    assert(canvas && counterEl, "canvas or counter not found");
+    assert(counterEl, "#counter not found");
 
-    // очистити стан
     gridState.fill("");
-    createGrid(canvas, () => {});
 
     const beforeFilled = gridState.filter(x => x && x !== "").length;
 
@@ -37,13 +42,11 @@ test("grid: paint() changes state and increments filled counter", () => {
 });
 
 test("grid: clearGrid() wipes cells and resets counter", () => {
-    const canvas = document.getElementById("canvas-grid");
+    const canvas = makeTestGrid();
     const counterEl = document.getElementById("counter");
-    assert(canvas && counterEl, "canvas or counter not found");
+    assert(counterEl, "#counter not found");
 
-    // заповнюємо все
     gridState.fill("#ff0000");
-    createGrid(canvas, () => {});
 
     clearGrid(canvas, counterEl, () => {});
     const filled = gridState.filter(x => x && x !== "").length;

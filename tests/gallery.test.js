@@ -18,12 +18,12 @@ function setupCanvasAndGallery() {
     const counterEl = document.getElementById("counter");
     assert(canvas && counterEl, "#canvas-grid або #counter не знайдено");
 
-    // чистий грід
     canvas.innerHTML = "";
     gridState.fill("");
-    createGrid(canvas, () => {});
 
-    // ініціалізуємо галерею ще раз (вона сама перемалює свій блок)
+    const handler = window.onCellClick || (() => {});
+    createGrid(canvas, handler);
+
     initGallery(canvas, counterEl, () => {}, () => {});
     const saveBtn   = document.getElementById("preset-save");
     const loadBtn   = document.getElementById("preset-load");
@@ -50,14 +50,12 @@ function createOnePresetWithKnownColor(color = "#aa0000") {
 
     const { saveBtn, select } = setupCanvasAndGallery();
 
-    // малюємо щось у gridState
     gridState.fill("");
     gridState[0] = color;
 
     const originalPrompt = window.prompt;
     window.prompt = () => "Test preset";
 
-    // клікаємо «Зберегти»
     saveBtn.click();
 
     window.prompt = originalPrompt;
@@ -65,7 +63,6 @@ function createOnePresetWithKnownColor(color = "#aa0000") {
     const presets = getPresetsFromStorage();
     assertEqual(presets.length, 1, "має бути рівно 1 пресет після збереження");
 
-    // select має мати рівно 1 option з назвою пресету
     assertEqual(select.options.length, 1, "select має містити 1 пресет-опцію");
     assertEqual(select.options[0].textContent, "Test preset", "назва опції має збігатися з назвою пресету");
 
@@ -91,18 +88,14 @@ test("gallery: load preset restores gridState from selected preset", () => {
     const savedData = presets[0].data;
     assertEqual(savedData[0], targetColor, "збережений пресет має колір у першій клітинці");
 
-    // тепер очистимо поле і перезапустимо галерею
     const { canvas, counterEl, loadBtn } = setupCanvasAndGallery();
 
-    // select / presets всередині gallery беруться з localStorage, тому список вже буде
-    // а ми поки що очистимо поточний стан
     gridState.fill("");
-    createGrid(canvas, () => {});
+    const handler = window.onCellClick || (() => {});
+    createGrid(canvas, handler);
 
-    // клікаємо «Завантажити»
     loadBtn.click();
 
-    // тепер gridState має збігатися з data з localStorage
     const afterLoad = [...gridState];
     assertArrayEquals(afterLoad, savedData, "load повинен відновити data з пресету");
     assertEqual(afterLoad[0], targetColor, "перша клітинка після load має мати колір з пресету");
@@ -117,7 +110,6 @@ test("gallery: remove preset deletes it from localStorage", () => {
 
     const { removeBtn } = setupCanvasAndGallery();
 
-    // Видаляємо
     removeBtn.click();
 
     presets = getPresetsFromStorage();
