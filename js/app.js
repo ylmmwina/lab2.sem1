@@ -36,6 +36,11 @@ import {
 
 import { exportPNG as exportPNGImpl } from './exporter.js';
 
+import {
+    initSettings,
+    notifyPaintClick,
+} from './settings.js';
+
 // ========= ЕЛЕМЕНТИ =========
 const canvasGrid = document.getElementById('canvas-grid');
 const colorInput = document.getElementById('color');
@@ -110,6 +115,7 @@ function onCellClick(index) {
 function handlePaint(index, color) {
     paintCell(index, color, canvasGrid, counterEl, logAction);
     updateUndoRedoUI();
+    notifyPaintClick();
 }
 
 function handleClearGrid() {
@@ -200,6 +206,7 @@ document.addEventListener('keydown', (e) => {
 
 // ========= СТАРТ =========
 makeGrid();
+initSettings(canvasGrid, counterEl, logAction, updateUndoRedoUI);
 
 // ===== ЕКСПОРТ У window ДЛЯ ТЕСТІВ/КОНСОЛІ =====
 window.gridState       = gridState;

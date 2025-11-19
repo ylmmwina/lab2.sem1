@@ -90,11 +90,9 @@ export function applyBorders(canvasGrid, enabled) {
 /**
  * Викликається після малювання клітинки.
  * Якщо звук увімкнено — можна підключити реальний аудіо-ефект.
- * Зараз просто лог у консоль, щоб показати на захисті.
  */
 export function notifyPaintClick() {
     if (!isSoundEnabled) return;
-    // Тут можна було б відтворювати звук, але для лабораторної достатньо
     // демонстрації реакції на налаштування
     console.log('paint click (sound enabled)');
 }
