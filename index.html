@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pixel Mood Board</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="tabs.css">
 </head>
 <body>
 
@@ -14,6 +15,14 @@
     <p class="subtitle">Малюй настрій пікселями</p>
 </header>
 
+<nav class="tabs">
+    <button class="tab-btn is-active" data-target="view-canvas">Полотно</button>
+    <button class="tab-btn" data-target="view-gallery">Галерея</button>
+    <button class="tab-btn" data-target="view-settings">Налаштування</button>
+    <button class="tab-btn" data-target="view-help">Довідка</button>
+</nav>
+
+<section id="view-canvas" class="view is-active">
 <!-- Головна зона малювання -->
 <main class="workspace">
     <!-- Панель інструментів -->
@@ -49,20 +58,7 @@
         </div>
     </section>
     <!-- Підказка клавіш -->
-    <section class="shortcuts">
-        <h3>⌨️ Гарячі клавіші</h3>
-        <ul>
-            <li><b>Z</b> — Undo</li>
-            <li><b>Y</b> — Redo</li>
-            <li><b>C</b> — Clear</li>
-            <li><b>R</b> — Random color</li>
-            <li><b>S</b> — Save</li>
-            <li><b>L</b> — Load</li>
-            <li><b>E</b> — Export PNG</li>
-            <li><b>P</b> — Pipette (увімкнути/вимкнути)</li>
-            <li><b>B</b> — Apply background</li>
-        </ul>
-    </section>
+
     <!-- Історія дій -->
     <section class="history-panel" aria-label="Історія дій">
         <h3>🧾 Історія дій</h3>
@@ -78,6 +74,50 @@
         </table>
     </section>
 </main>
+</section>
+
+<section id="view-gallery" class="view">
+    <div class="card">
+        <h3>Галерея пресетів</h3>
+        <p>Тут з’являться кнопки: «Зберегти як пресет», «Завантажити пресет», «Видалити пресет», а також список наявних пресетів.</p>
+        <div class="controls">
+            <button id="preset-save">Зберегти як пресет</button>
+            <button id="preset-load">Завантажити пресет</button>
+            <button id="preset-remove">Видалити пресет</button>
+        </div>
+        <div id="preset-list" style="margin-top:8px;"></div>
+    </div>
+</section>
+
+<section id="view-settings" class="view">
+    <div class="card">
+        <h3>Налаштування</h3>
+        <label style="display:block; margin-bottom:6px;">
+            <input type="checkbox" id="toggle-borders"> Показувати межі клітинок
+        </label>
+        <label style="display:block; margin-bottom:6px;">
+            <input type="checkbox" id="toggle-sound"> Звук кліку (демо)
+        </label>
+        <button id="app-reset">Скинути застосунок</button>
+    </div>
+</section>
+
+<section id="view-help" class="view">
+    <section class="shortcuts">
+        <h3>⌨️ Гарячі клавіші</h3>
+        <ul>
+            <li><b>Z</b> — Undo</li>
+            <li><b>Y</b> — Redo</li>
+            <li><b>C</b> — Clear</li>
+            <li><b>R</b> — Random color</li>
+            <li><b>S</b> — Save</li>
+            <li><b>L</b> — Load</li>
+            <li><b>E</b> — Export PNG</li>
+            <li><b>P</b> — Pipette (увімкнути/вимкнути)</li>
+            <li><b>B</b> — Apply background</li>
+        </ul>
+    </section>
+</section>
 
 <!-- Підвал -->
 <footer class="footer">
@@ -86,5 +126,6 @@
 
 <script src="script.js"></script>
 <script src="tests.js"></script>
+<script src="tabs.js"></script>
 </body>
 </html>
