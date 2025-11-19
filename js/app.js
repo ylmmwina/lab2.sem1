@@ -16,6 +16,26 @@ import {
     canRedo,
 } from './history.js';
 
+import {
+    createGrid,
+    paint as paintCell,
+    clearGrid as clearGridImpl,
+} from './grid.js';
+
+import {
+    randomColor as randomColorImpl,
+    pipette as pipetteImpl,
+} from './palette.js';
+
+import { applyBackground as applyBackgroundImpl } from './background.js';
+
+import {
+    saveToStorage as saveToStorageImpl,
+    loadFromStorage as loadFromStorageImpl,
+} from './storage.js';
+
+import { exportPNG as exportPNGImpl } from './exporter.js';
+
 // ========= ЕЛЕМЕНТИ =========
 const canvasGrid = document.getElementById('canvas-grid');
 const colorInput = document.getElementById('color');
@@ -35,6 +55,7 @@ const pipetteBtn = document.getElementById('pipette');
 // ========= ІСТОРІЯ ДІЙ (ТАБЛИЦЯ) =========
 const historyBody = document.getElementById('history-body');
 let actionIndex = 1;
+
 // Додати запис в історію (нове вгору)
 function logAction(action, details = '') {
     if (!historyBody) return; // на випадок, якщо блоку ще нема в HTML
@@ -47,9 +68,6 @@ function logAction(action, details = '') {
     const MAX_ROWS = 200;
     while (historyBody.children.length > MAX_ROWS) historyBody.lastChild.remove();
 }
-
-// Константи
-const STORAGE_KEY = 'pixel-mood:canvas';
 
 // Локальний стан
 let isPipette = false;
@@ -67,70 +85,58 @@ function updateUndoRedoUI() {
     redoBtn.disabled = !canRedo();
 }
 
-// Генерація сітки
-function makeGrid() {
-    canvasGrid.innerHTML = '';
-    canvasGrid.classList.remove('placeholder');
-    canvasGrid.classList.add('pixels');
+// ========= ҐРІД / ПОЛОТНО =========
 
-    for (let i = 0; i < SIZE * SIZE; i++) {
-        const cell = document.createElement('button');
-        cell.className = 'pixel';
-        cell.dataset.index = i;
-        cell.addEventListener('click', () => onCellClick(i));
-        canvasGrid.appendChild(cell);
-    }
+function makeGrid() {
+    createGrid(canvasGrid, onCellClick);
 
     // Ініціалізація історії та базового знімка
     initHistory();
     commitSnapshot();
     updateCounter(counterEl);
-    logAction('grid:init', '8×8 created');
+    logAction('grid:init', `${SIZE}×${SIZE} created`);
 }
 
-// Клік по клітинці (малювання)
+// Клік по клітинці (малювання / піпетка)
 function onCellClick(index) {
     if (isPipette) {
-        // взяти колір із клітинки
-        const picked = gridState[index] || '#ffffff';
-        colorInput.value = picked;
+        pipetteImpl(index, colorInput, pipetteBtn, logAction);
         isPipette = false;
-        pipetteBtn.classList.remove('is-active');
-        logAction('pipette', 'picked ' + picked);
         return;
     }
-    paint(index, colorInput.value);
+    handlePaint(index, colorInput.value);
 }
 
-function paint(index, color) {
-    gridState[index] = color;
-    canvasGrid.children[index].style.background = color;
-    commitSnapshot();
-    updateCounter(counterEl);
-    logAction('paint', `i=${index}, color=${color}`);
+function handlePaint(index, color) {
+    paintCell(index, color, canvasGrid, counterEl, logAction);
+    updateUndoRedoUI();
 }
 
-function clearGrid() {
-    gridState.fill('');
-    renderFromState(canvasGrid, counterEl);
-    commitSnapshot();
-    logAction('clear', 'canvas reset');
+function handleClearGrid() {
+    clearGridImpl(canvasGrid, counterEl, logAction);
+    updateUndoRedoUI();
 }
 
-// Випадковий колір у палітру
-function randomColor() {
-    const v = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
-    colorInput.value = `#${v}`;
-    logAction('palette:random', colorInput.value);
+// ========= ПАЛІТРА / ПІПЕТКА =========
+
+function handleRandomColor() {
+    randomColorImpl(colorInput, logAction);
 }
 
-// Фон сторінки
-function applyBackground() {
-    document.body.style.background = bgInput.value;
-    logAction('background:apply', bgInput.value);
+function togglePipette() {
+    isPipette = !isPipette;
+    pipetteBtn.classList.toggle('is-active', isPipette);
+    logAction('pipette', isPipette ? 'on' : 'off');
 }
 
-// Обгортки над undo/redo історії
+// ========= ФОН =========
+
+function handleApplyBackground() {
+    applyBackgroundImpl(bgInput, logAction);
+}
+
+// ========= UNDO / REDO =========
+
 function handleUndo() {
     historyUndo(canvasGrid, counterEl, renderFromState);
     updateUndoRedoUI();
@@ -143,72 +149,34 @@ function handleRedo() {
     logAction('redo');
 }
 
-// SAVE / LOAD (localStorage)
-function saveToStorage() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gridState));
-    logAction('save', 'localStorage');
+// ========= SAVE / LOAD =========
+
+function handleSaveToStorage() {
+    saveToStorageImpl(logAction);
 }
 
-function loadFromStorage() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length === gridState.length) {
-            // оновлюємо стан і рендеримо
-            for (let i = 0; i < gridState.length; i++) {
-                gridState[i] = parsed[i];
-            }
-            renderFromState(canvasGrid, counterEl);
-            initHistory();
-            commitSnapshot();
-            logAction('load', 'localStorage');
-        }
-    } catch {
-        // ігноруємо
-    }
+function handleLoadFromStorage() {
+    loadFromStorageImpl(canvasGrid, counterEl, logAction);
+    updateUndoRedoUI();
 }
 
-// Експорт PNG
-function exportPNG() {
-    const scale = 32; // розмір «пікселя» в зображенні
-    const cnv = document.createElement('canvas');
-    cnv.width  = SIZE * scale;
-    cnv.height = SIZE * scale;
-    const g = cnv.getContext('2d');
+// ========= EXPORT =========
 
-    for (let y = 0; y < SIZE; y++) {
-        for (let x = 0; x < SIZE; x++) {
-            const col = gridState[y * SIZE + x] || '#ffffff';
-            g.fillStyle = col;
-            g.fillRect(x * scale, y * scale, scale, scale);
-        }
-    }
-    const url = cnv.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'pixel-mood.png';
-    a.click();
-    logAction('export', 'png');
+function handleExportPNG() {
+    exportPNGImpl(logAction);
 }
 
-// Піпетка
-function togglePipette() {
-    isPipette = !isPipette;
-    pipetteBtn.classList.toggle('is-active', isPipette);
-    logAction('pipette', isPipette ? 'on' : 'off');
-}
+// ========= ПОДІЇ =========
 
-// Події
-applyBgBtn.addEventListener('click', applyBackground);
-clearBtn.addEventListener('click', clearGrid);
-randomBtn.addEventListener('click', randomColor);
+applyBgBtn.addEventListener('click', handleApplyBackground);
+clearBtn.addEventListener('click', handleClearGrid);
+randomBtn.addEventListener('click', handleRandomColor);
 
 undoBtn.addEventListener('click', handleUndo);
 redoBtn.addEventListener('click', handleRedo);
-saveBtn.addEventListener('click', saveToStorage);
-loadBtn.addEventListener('click', loadFromStorage);
-exportBtn.addEventListener('click', exportPNG);
+saveBtn.addEventListener('click', handleSaveToStorage);
+loadBtn.addEventListener('click', handleLoadFromStorage);
+exportBtn.addEventListener('click', handleExportPNG);
 pipetteBtn.addEventListener('click', togglePipette);
 
 // ==== ГАРЯЧІ КЛАВІШІ (layout-agnostic через e.code) ====
@@ -219,30 +187,30 @@ document.addEventListener('keydown', (e) => {
     switch (e.code) {
         case 'KeyZ': e.preventDefault(); handleUndo(); break;
         case 'KeyY': e.preventDefault(); handleRedo(); break;
-        case 'KeyC': e.preventDefault(); clearGrid(); break;
-        case 'KeyR': e.preventDefault(); randomColor(); break;
-        case 'KeyS': e.preventDefault(); saveToStorage(); break;
-        case 'KeyL': e.preventDefault(); loadFromStorage(); break;
-        case 'KeyE': e.preventDefault(); exportPNG(); break;
+        case 'KeyC': e.preventDefault(); handleClearGrid(); break;
+        case 'KeyR': e.preventDefault(); handleRandomColor(); break;
+        case 'KeyS': e.preventDefault(); handleSaveToStorage(); break;
+        case 'KeyL': e.preventDefault(); handleLoadFromStorage(); break;
+        case 'KeyE': e.preventDefault(); handleExportPNG(); break;
         case 'KeyP': e.preventDefault(); togglePipette(); break;
-        case 'KeyB': e.preventDefault(); applyBackground(); break;
+        case 'KeyB': e.preventDefault(); handleApplyBackground(); break;
         default: break;
     }
 });
 
-// Старт
+// ========= СТАРТ =========
 makeGrid();
 
 // ===== ЕКСПОРТ У window ДЛЯ ТЕСТІВ/КОНСОЛІ =====
-window.gridState      = gridState;
-window.paint          = paint;
-window.clearGrid      = clearGrid;
-window.randomColor    = randomColor;
-window.applyBackground= applyBackground;
-window.undo           = handleUndo;
-window.redo           = handleRedo;
-window.saveToStorage  = saveToStorage;
-window.loadFromStorage= loadFromStorage;
-window.exportPNG      = exportPNG;
-window.togglePipette  = togglePipette;
-window.onCellClick    = onCellClick;
+window.gridState       = gridState;
+window.paint           = (index, color) => handlePaint(index, color ?? colorInput.value);
+window.clearGrid       = handleClearGrid;
+window.randomColor     = handleRandomColor;
+window.applyBackground = handleApplyBackground;
+window.undo            = handleUndo;
+window.redo            = handleRedo;
+window.saveToStorage   = handleSaveToStorage;
+window.loadFromStorage = handleLoadFromStorage;
+window.exportPNG       = handleExportPNG;
+window.togglePipette   = togglePipette;
+window.onCellClick     = onCellClick;
