@@ -1,4 +1,4 @@
-/* tabs.css — мінімальні стилі для вкладок і вікон */
+/* tabs.css — стилі для вкладок і вікон */
 .tabs {
     display: flex;
     gap: 8px;
@@ -29,11 +29,16 @@
     display: block;
 }
 
-/* опційно: контент всередині нових вкладок */
+/* картки всередині вкладок */
 .view .card {
     background: rgba(255,255,255,.2);
     border: 1px solid rgba(255,255,255,.35);
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 12px;
+}
+
+/* межі клітинок за налаштуваннями */
+.pixel.with-border {
+    box-shadow: 0 0 0 1px rgba(0,0,0,.25);
 }
